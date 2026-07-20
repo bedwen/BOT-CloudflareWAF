@@ -57,7 +57,40 @@ def block_ip(cf_client):
     else:
         print(f"[X] System: {target_ip} The IP address could not be blocked")
 
+def delete_rule_main(cf_client):
+    print("\n"+"-"*50)
+    print("--- DELETE RULE ---")
 
+    #first list rule
+    rule_list = waf_rules_list(cf_client)
+
+    if not rule_list:
+        print("No rule was found to delete. Returning to the main menu.")
+        return
+
+    choose_rule = input(f"\nEnter the sequence number of the rule you want to delete (1-{len(rule_list)}) or 'q' for cancel operation.")
+
+    if choose_rule.lower() == 'q':
+        print("[-] The operation was canceled.")
+        return
+
+    try:
+        index = int(choose_rule) - 1 #-1 for index calculating.
+        if 0 <= index < len(rule_list): #index range
+            selected_rule = rule_list[index]
+            rule_id = selected_rule.get("id")
+            target_rule = selected_rule.get("configuration", {}).get("value", "Unknown Target")
+
+            approval = input(f"[!] WARN: Rule {choose_rule} containing the target ‘{target_rule}’ will be deleted. Do you confirm? (Y/N): ")
+            if approval.lower() == 'y':
+                print(f"\n[/] Rule is deleting...")
+                cf_client.delete_rule(rule_id)
+            else:
+                print("[-] The operation was canceled")
+        else:
+            print(("[X] Error: The number you entered is not on the list."))
+    except ValueError:
+        print("[X] Error: Please enter a valid number.")
 def main():
     if not API_TOKEN or not ZONE_ID:
         print("[!] Error: “Please define the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID values in your .env file.")
@@ -79,6 +112,7 @@ def main():
         print("="*50+"\n")
         print("[1] List Rules\n"
               "[2] Block IP Address\n"
+              "[3] Delete Rule\n"
               "[0] Exit")
         print("\n" + "="*50)
 
@@ -88,6 +122,8 @@ def main():
             waf_rules_list(cf_client)
         elif choose == "2":
             block_ip(cf_client)
+        elif choose == "3":
+            delete_rule_main(cf_client)
         elif choose == "0":
             print("\n[/] Exiting...")
             break
