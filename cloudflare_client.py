@@ -61,3 +61,26 @@ class CloudflareClient:
         except requests.exceptions.RequestException as e:
             print(f"[X] Connection Error: {e}")
             return False
+
+
+def delete_rule(self, rule_id):
+    #delete waf rule with index
+    #adding rule id to url
+    endpoint = f"{self.base_url}/firewall/access_rules/rules/{rule_id}"
+
+    try:
+        #delete response for deleting process
+        response = requests.delete(endpoint, headers=self.headers)
+
+        if response.status_code == 200:
+            print(f"[✔] Success! Rule (ID: {rule_id}) deleted.")
+            return True
+        else:
+            print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
+            return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"[x] Connection Error: {e}")
+        return False
+
+
