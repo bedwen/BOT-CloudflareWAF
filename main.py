@@ -90,6 +90,7 @@ def main():
             block_ip(cf_client)
         elif choose == "0":
             print("\n[/] Exiting...")
+            break
         else:
             print("\n[!] Error: Invalid selection. Please select one of the options provided.")
 
