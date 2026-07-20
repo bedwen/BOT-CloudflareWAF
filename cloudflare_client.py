@@ -35,15 +35,15 @@ class CloudflareClient:
             print(f"Connection Error: {e}")
             return None
 
-    def block_ip(self, ip_addess, description="Target IP blocked by CLDBOT"):
+    def block_ip(self, ip_address, description="Target IP blocked by CLDBOT"):
         endpoint = f"{self.base_url}/firewall/access_rules/rules"
         #the content of the rule we will send to cloudflare (payload)
         payload = {
             "mode": "block",
             "configuration": {
-                "target": "ip"
-                "value": ip_addess
-            }
+                "target": "ip",
+                "value": ip_address
+            },
             "notes": description
         }
 
@@ -52,7 +52,7 @@ class CloudflareClient:
             response = requests.post(endpoint, headers=self.header, json=payload)
 
             if response.status_code == 200:
-                print(f"[✔] {ip_addess} The IP address has been successfully blocked.")
+                print(f"[✔] {ip_address} The IP address has been successfully blocked.")
                 return True
             else:
                 print(f"[X] Rule Addition Error: {response.status_code} - {response.text}")
