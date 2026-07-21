@@ -49,7 +49,7 @@ class CloudflareClient:
 
         try:
             #this request is POST because we are sending data.
-            response = requests.post(endpoint, headers=self.header, json=payload)
+            response = requests.post(endpoint, headers=self.headers, json=payload)
 
             if response.status_code == 200:
                 print(f"[✔] {ip_address} The IP address has been successfully blocked.")

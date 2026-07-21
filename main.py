@@ -34,7 +34,7 @@ def waf_rules_list(cf_client):
         print("\n No rule was found, or an API connection error occurred.")
 
 
-def block_ip(cf_client):
+def block_ip_main(cf_client):
     #take ip address from user and block.
     print("\n"+"-"*50)
     print("--- IP BLOCK ---")
@@ -50,9 +50,9 @@ def block_ip(cf_client):
 
     #try to add rule
     print(f"\n [/] A rule is being created for the address {target_ip}")
-    block_check = cf_client.block.ip(target_ip(), description)
+    block_check = cf_client.block_ip(target_ip, description)
 
-    if block_ip():
+    if block_check:
         print(f"[✔] System: {target_ip} The IP address has been successfully added to the WAF rules.")
     else:
         print(f"[X] System: {target_ip} The IP address could not be blocked")
@@ -121,7 +121,7 @@ def main():
         if choose == "1":
             waf_rules_list(cf_client)
         elif choose == "2":
-            block_ip(cf_client)
+            block_ip_main(cf_client)
         elif choose == "3":
             delete_rule_main(cf_client)
         elif choose == "0":
