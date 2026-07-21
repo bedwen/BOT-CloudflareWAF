@@ -18,8 +18,8 @@ ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
 
 def waf_rules_list(cf_client):
     #WAF rules
-    print("\n"+"-"*50)
-    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n [3] IP Block Rules")
+    print("="*50)
+    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n[3] IP Block Rules")
     rule_type = input("[>] Select the rule you want to list: ")
     rule_list = cf_client.get_waf_rules(rule_type)
 
@@ -31,6 +31,7 @@ def waf_rules_list(cf_client):
 
     for index, rule in enumerate(rule_list, start=1):
         if rule_type == '3':
+
             #ip access rules format, it is different from the other rules
             target = rule.get("configuration", {}).get("value", "Unknown")
             mode = rule.get("mode", "Unknown")
@@ -41,7 +42,7 @@ def waf_rules_list(cf_client):
             description = rule.get("description","No Description")
             action = rule.get("action","Unknown")
             print(f"[{index}] Rule: {description:<25} | Action: {action}")
-    print("="*60)
+    print("="*50)
 
 
 def block_ip_main(cf_client):
@@ -70,14 +71,14 @@ def block_ip_main(cf_client):
 def delete_rule_main(cf_client):
     print("\n"+"-"*50)
     print("--- DELETE RULE ---")
-    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n [3] IP Block Rules")
+    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n[3] IP Block Rules")
     rule_type = input("[>] Select the rule you want to delete it: ")
 
     #show rules before delete
     rule_list = cf_client.get_waf_rules((rule_type))
 
     if not rule_list:
-        print("No rule was found to delete. Returning to the main menu.")
+        print("[-] No rule was found to delete. Returning to the main menu.")
         return
 
     print("\n"+"="*50)
@@ -143,6 +144,7 @@ def main():
         print("\n" + "="*50)
 
         choose = input("[>] Please select an operation: ")
+
 
         if choose == "1":
             waf_rules_list(cf_client)
