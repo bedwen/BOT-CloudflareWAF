@@ -1,4 +1,6 @@
 import os
+from ipaddress import ip_address
+
 from dotenv import load_dotenv
 from cloudflare_client import CloudflareClient
 from config import API_TOKEN, ZONE_ID
@@ -8,6 +10,8 @@ load_dotenv()
 
 API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
+
+
 
 def waf_rules_list(cf_client):
     #WAF rules
@@ -21,11 +25,14 @@ def waf_rules_list(cf_client):
             rule_id = rule.get("id", "No ID")
             description = rule.get("description", "No Description")
             action = rule.get("action", "No Action")
+            config = rule.get("configuration", {})
+            ip_address = config.get("value", "Unknown")
 
             print(f"Rule #{index}")
             print(f"ID          : {rule_id}")
             print(f"Action      : {action.upper()}")
             print(f"Description : {description}")
+            print(f"IP Address  : {ip_address:<15}")
             print("-"*50)
 
     elif rules is not None and len(rules) == 0:
@@ -107,6 +114,7 @@ def main():
     cf_client = CloudflareClient(API_TOKEN, ZONE_ID)
 
     while True:
+        zone_id = ZONE_ID
         print("\n" + "="*50)
         print("CLDBOT MENU")
         print("="*50+"\n")
