@@ -1,7 +1,10 @@
 import os
+from asyncio.staggered import staggered_race
 from ipaddress import ip_address
 
 from dotenv import load_dotenv
+from requests.packages import target
+
 from cloudflare_client import CloudflareClient
 from config import API_TOKEN, ZONE_ID
 
@@ -15,30 +18,30 @@ ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
 
 def waf_rules_list(cf_client):
     #WAF rules
-    rules = cf_client.get_waf_rules()
+    print("\n"+"-"*50)
+    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n [3] IP Block Rules")
+    rule_type = input("[>] Select the rule you want to list: ")
+    rule_list = cf_client.get_waf_rules(rule_type)
 
-    if rules:
-        print(f"\n[✔] Success. {len(rules)} Rules \n")
-        print("-"*50)
+    if not rule_list:
+        print("The rule could not be found or listed.")
+        return
 
-        for index, rule in enumerate(rules, start=1):
-            rule_id = rule.get("id", "No ID")
-            description = rule.get("description", "No Description")
-            action = rule.get("action", "No Action")
-            config = rule.get("configuration", {})
-            ip_address = config.get("value", "Unknown")
 
-            print(f"Rule #{index}")
-            print(f"ID          : {rule_id}")
-            print(f"Action      : {action.upper()}")
-            print(f"Description : {description}")
-            print(f"IP Address  : {ip_address:<15}")
-            print("-"*50)
 
-    elif rules is not None and len(rules) == 0:
-        print("\n Connection was established to the API, but no WAF rules were found in this zone.")
-    else:
-        print("\n No rule was found, or an API connection error occurred.")
+    for index, rule in enumerate(rule_list, start=1):
+        if rule_type == '3':
+            #ip access rules format, it is different from the other rules
+            target = rule.get("configuration", {}).get("value", "Unknown")
+            mode = rule.get("mode", "Unknown")
+            notes = rule.get("notes","No Description")
+            print(f"[{index}] IP: {target:<15} | Mod: {mode:<8} | Note: {notes}")
+        else:
+            #for custom and rate-limit format (they have extra description and action)
+            description = rule.get("description","No Description")
+            action = rule.get("action","Unknown")
+            print(f"[{index}] Rule: {description:<25} | Action: {action}")
+    print("="*60)
 
 
 def block_ip_main(cf_client):
@@ -67,13 +70,28 @@ def block_ip_main(cf_client):
 def delete_rule_main(cf_client):
     print("\n"+"-"*50)
     print("--- DELETE RULE ---")
+    print("[1] Custom Rules\n[2] Rate-Limiting Rules\n [3] IP Block Rules")
+    rule_type = input("[>] Select the rule you want to delete it: ")
 
-    #first list rule
-    rule_list = waf_rules_list(cf_client)
+    #show rules before delete
+    rule_list = cf_client.get_waf_rules((rule_type))
 
     if not rule_list:
         print("No rule was found to delete. Returning to the main menu.")
         return
+
+    print("\n"+"="*50)
+    print("Rules:")
+    print("\n"+"="*50)
+
+    for index, rule in enumerate(rule_list, start=1):
+        if rule_type == '3':
+            target = rule.get("configuration",{}).get("value","Unknown")
+            print(f"[{index}] Target IP: {target}")
+        else:
+            description = rule.get("description","No Description")
+            print(f"[{index}] Rule Name: {description}")
+    print("="*50)
 
     choose_rule = input(f"\nEnter the sequence number of the rule you want to delete (1-{len(rule_list)}) or 'q' for cancel operation.")
 
