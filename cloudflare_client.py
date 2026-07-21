@@ -1,4 +1,6 @@
 import os
+from http.client import responses
+from tokenize import endpats
 
 import requests
 from dotenv import load_dotenv
@@ -25,19 +27,12 @@ class CloudflareClient:
         }
 
 
-    def get_waf_rules(self):
+    def get_waf_rules(self,rule_type):
         #retrieves the existing firewall rules for the specified zone.
         #endpoint for rules
-        print("-"*50)
-        print("Rules:\n"
-              "[1] Custom Rules\n"
-              "[2] Rate-Limiting Rules\n"
-              "[3] IP Block Rules")
-
-        rule_selection = int(input("[>] Please select the rule type: "))
 
         #Custom Rules
-        if rule_selection == 1:
+        if rule_type == '1':
             endpoint = f"{self.base_url}/rulesets/phases/http_request_firewall_custom/entrypoint"
 
             try:
@@ -59,7 +54,7 @@ class CloudflareClient:
                 return []
 
         #Rate-Limiting Rules
-        elif rule_selection == 2:
+        elif rule_type == '2':
             endpoint = f"{self.base_url}/rulesets/phases/http_ratelimit/entrypoint"
             try:
                 # sending a GET request to the API
@@ -80,7 +75,7 @@ class CloudflareClient:
                 return []
 
         #IP Block Rules
-        elif rule_selection == 3:
+        elif rule_type == '3':
             endpoint = f"{self.base_url}/firewall/access_rules/rules"
             try:
                 # sending a GET request to the API
@@ -127,24 +122,37 @@ def block_ip(self, ip_address, description="Target IP blocked by CLDBOT"):
             return False
 
 
-def delete_rule(self, rule_id):
-    #delete waf rule with index
-    #adding rule id to url
-    endpoint = f"{self.base_url}/firewall/access_rules/rules/{rule_id}"
+def delete_rule(self, rule_id, rule_type):
+    if rule_type == '1':
+        if not hasattr(self, 'custom_ruleset_id') or not self.custom_ruleset_id:
+            print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+            return False
+        endpoint = f"{self.base_url}/rulesets/{self.custom_ruleset_id}/rules/{rule_id}"
+
+    elif rule_type == '2':
+        if not hasattr(self, 'ratelimit_ruleset_id') or not self.ratelimit_ruleset_id:
+            print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+            return False
+        endpoint = f"{self.base_url}/rulesets/{self.ratelimit_ruleset_id}/rules/{rule_id}"
+
+    elif rule_type == '3':
+        endpoint = f"{self.base_url}/firewall/access_rules/rules/{rule_id}"
+
+    else:
+        print("[X] Invalid rule type!")
+        return False
 
     try:
-        #delete response for deleting process
         response = requests.delete(endpoint, headers=self.headers)
 
         if response.status_code == 200:
-            print(f"[✔] Success! Rule (ID: {rule_id}) deleted.")
+            print(f"[✔] Success! Rule (ID: ({rule_id}) delet.d")
             return True
         else:
             print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
             return False
 
     except requests.exceptions.RequestException as e:
-        print(f"[x] Connection Error: {e}")
+        print(f"[X] Connection Error: {e}")
         return False
-
-
+    
