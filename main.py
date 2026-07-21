@@ -110,7 +110,7 @@ def delete_rule_main(cf_client):
             approval = input(f"[!] WARN: Rule {choose_rule} containing the target ‘{target_rule}’ will be deleted. Do you confirm? (Y/N): ")
             if approval.lower() == 'y':
                 print(f"\n[/] Rule is deleting...")
-                cf_client.delete_rule(rule_id)
+                cf_client.delete_rule(rule_id, rule_type)
             else:
                 print("[-] The operation was canceled")
         else:

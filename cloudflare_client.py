@@ -94,65 +94,65 @@ class CloudflareClient:
                 return []
 
 
-def block_ip(self, ip_address, description="Target IP blocked by CLDBOT"):
-        endpoint = f"{self.base_url}/firewall/access_rules/rules"
-        #the content of the rule we will send to cloudflare (payload)
-        payload = {
-            "mode": "block",
-            "configuration": {
-                "target": "ip",
-                "value": ip_address
-            },
-            "notes": description
-        }
+    def block_ip(self, ip_address, description="Target IP blocked by CLDBOT"):
+            endpoint = f"{self.base_url}/firewall/access_rules/rules"
+            #the content of the rule we will send to cloudflare (payload)
+            payload = {
+                "mode": "block",
+                "configuration": {
+                    "target": "ip",
+                    "value": ip_address
+                },
+                "notes": description
+            }
+
+            try:
+                #this request is POST because we are sending data.
+                response = requests.post(endpoint, headers=self.headers, json=payload)
+
+                if response.status_code == 200:
+                    print(f"[✔] {ip_address} The IP address has been successfully blocked.")
+                    return True
+                else:
+                    print(f"[X] Rule Addition Error: {response.status_code} - {response.text}")
+                    return False
+
+            except requests.exceptions.RequestException as e:
+                print(f"[X] Connection Error: {e}")
+                return False
+
+
+    def delete_rule(self, rule_id, rule_type):
+        if rule_type == '1':
+            if not hasattr(self, 'custom_ruleset_id') or not self.custom_ruleset_id:
+                print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+                return False
+            endpoint = f"{self.base_url}/rulesets/{self.custom_ruleset_id}/rules/{rule_id}"
+
+        elif rule_type == '2':
+            if not hasattr(self, 'ratelimit_ruleset_id') or not self.ratelimit_ruleset_id:
+                print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+                return False
+            endpoint = f"{self.base_url}/rulesets/{self.ratelimit_ruleset_id}/rules/{rule_id}"
+
+        elif rule_type == '3':
+            endpoint = f"{self.base_url}/firewall/access_rules/rules/{rule_id}"
+
+        else:
+            print("[X] Invalid rule type!")
+            return False
 
         try:
-            #this request is POST because we are sending data.
-            response = requests.post(endpoint, headers=self.headers, json=payload)
+            response = requests.delete(endpoint, headers=self.headers)
 
             if response.status_code == 200:
-                print(f"[✔] {ip_address} The IP address has been successfully blocked.")
+                print(f"[✔] Success! Rule (ID: ({rule_id}) delet.d")
                 return True
             else:
-                print(f"[X] Rule Addition Error: {response.status_code} - {response.text}")
+                print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
                 return False
 
         except requests.exceptions.RequestException as e:
             print(f"[X] Connection Error: {e}")
             return False
 
-
-def delete_rule(self, rule_id, rule_type):
-    if rule_type == '1':
-        if not hasattr(self, 'custom_ruleset_id') or not self.custom_ruleset_id:
-            print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
-            return False
-        endpoint = f"{self.base_url}/rulesets/{self.custom_ruleset_id}/rules/{rule_id}"
-
-    elif rule_type == '2':
-        if not hasattr(self, 'ratelimit_ruleset_id') or not self.ratelimit_ruleset_id:
-            print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
-            return False
-        endpoint = f"{self.base_url}/rulesets/{self.ratelimit_ruleset_id}/rules/{rule_id}"
-
-    elif rule_type == '3':
-        endpoint = f"{self.base_url}/firewall/access_rules/rules/{rule_id}"
-
-    else:
-        print("[X] Invalid rule type!")
-        return False
-
-    try:
-        response = requests.delete(endpoint, headers=self.headers)
-
-        if response.status_code == 200:
-            print(f"[✔] Success! Rule (ID: ({rule_id}) delet.d")
-            return True
-        else:
-            print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
-            return False
-
-    except requests.exceptions.RequestException as e:
-        print(f"[X] Connection Error: {e}")
-        return False
-    
