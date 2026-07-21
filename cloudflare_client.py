@@ -146,7 +146,7 @@ class CloudflareClient:
             response = requests.delete(endpoint, headers=self.headers)
 
             if response.status_code == 200:
-                print(f"[✔] Success! Rule (ID: ({rule_id}) delet.d")
+                print(f"[✔] Success! Rule (ID: ({rule_id}) deleted")
                 return True
             else:
                 print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
