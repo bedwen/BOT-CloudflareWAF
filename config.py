@@ -7,3 +7,6 @@ load_dotenv() #find .env and load
 API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
 
+if not API_TOKEN or not ZONE_ID:
+    print("[!] Error: Please define the CLOUDFLARE_API_TOKEN and CLODFLARE_ZONE_ID values in your .env file.")
+    exit(1)
