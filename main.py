@@ -1,3 +1,6 @@
+import os.path
+from unittest.result import failfast
+
 from config import API_TOKEN, ZONE_ID
 from core.api_client import CloudflareAPIClient
 from modules.ip_access import IPAccessManager
@@ -62,6 +65,60 @@ def block_ip_main(ip_mgr):
     if not description.strip():
         description = "The target IP has been blocked via CLDBOT."
 
+
+def bulk_block_main(ip_mgr):
+    print("--- BULK IP BLOCK ---")
+
+    file_path = input("Enter the file name containing IP addresses (e.g., ips.txt) or 'q' to cancel: ").strip()
+
+    if file_path.lower() == 'q':
+        print("[-] The operation was canceled.")
+        return
+
+    #check file
+    if not os.path.isfile(file_path):
+        print(f"[!] Error: The file '{file_path}' was not found in the directory.")
+        return
+
+    description = input("Enter a common description for these IPs (Press Enter for defaul): ").strip()
+    if not description:
+        description = "Bulk blocked via CLDBOT"
+
+    print(f"\n[/] Reading '{file_path}' and processing IPs...")
+
+    success_count = 0
+    fail_count = 0
+    invalid_count = 0
+
+    try:
+        #open file with write mode
+        with open(file_path, 'r') as file:
+            for line in file:
+                ip = line.strip()
+                if not ip:
+                    continue
+
+                if not is_valid_ip(ip):
+                    print(f"[!] Invalid IP format skipped: {ip}")
+                    invalid_count += 1
+                    continue
+
+                block_check = ip_mgr.block_ip(ip, description)
+                if block_check:
+                    success_count += 1
+                else:
+                    fail_count += 1
+
+    except Exception as e:
+        print(f"[X] Error reading file: {e}")
+        return
+
+    print("--- BULK BLOCK SUMMARY ---")
+    print(f"Total processed : {success_count + fail_count + invalid_count}\n"
+          f"Successful      : {success_count}\n"
+          f"Failed          : {fail_count}\n"
+          f"Invalid format  : {invalid_count}\n"
+          f"="*50)
 
 def delete_rule_main(ip_mgr, waf_mgr):
     print("--- DELETE RULE ---")
@@ -144,6 +201,7 @@ def main():
         print("[1] List Rules\n"
               "[2] Block IP Address\n"
               "[3] Delete Rule\n"
+              "[4] Bulk Block IPs (from file)\n"
               "[0] Exit")
         print("\n"+"="*50)
 
@@ -155,6 +213,8 @@ def main():
             block_ip_main(ip_mgr)
         elif choose == "3":
             delete_rule_main(ip_mgr,waf_mgr)
+        elif choose == "4":
+            bulk_block_main(ip_mgr)
         elif choose == "0":
             print("\n[/] Exiting...")
             break
