@@ -2,6 +2,7 @@ from config import API_TOKEN, ZONE_ID
 from core.api_client import CloudflareAPIClient
 from modules.ip_access import IPAccessManager
 from modules.waf_rules import WafRulesManager
+from utils.ip_validation import is_valid_ip
 
 def waf_rule_list(ip_mgr, waf_mgr):
     #WAF Rules
@@ -40,21 +41,27 @@ def block_ip_main(ip_mgr):
     #take ip address from user and block.
     print("--- IP BLOCK ---")
 
-    target_ip = input("Enter the IP address to block: ")
-    if not target_ip.strip():
-        print("[!] Error: The IP address cannot be left blank. The transaction was canceled.")
-        return
+    while True:
+        target_ip = input("Enter the IP address to block: ")
+        if target_ip.lower() == 'q':
+            print("[-] The operation was canceled.")
+            return
+
+        if not target_ip:
+            print("[!] Error: The IP address cannot be left blank.")
+            continue
+
+        #ip validation
+        if not is_valid_ip(target_ip):
+            print(f"[!] Error: '{target_ip}' is not a valid IP address. Please try again.")
+            continue
+
+        break
 
     description = input("Enter a description/note (Press Enter to leave blank): ")
     if not description.strip():
         description = "The target IP has been blocked via CLDBOT."
 
-    #try to add rule
-    print(f"\n[/] A rule is being created for the address {target_ip}")
-    block_check = ip_mgr.block_ip(target_ip, description)
-
-    if not block_check:
-        print(f"[X] System: {target_ip} The IP address could not be blocked.")
 
 def delete_rule_main(ip_mgr, waf_mgr):
     print("--- DELETE RULE ---")
@@ -122,7 +129,7 @@ def main():
      ██║     ██║     ██║  ██║██████╔╝██║   ██║   ██║   
      ██║     ██║     ██║  ██║██╔══██╗██║   ██║   ██║   
      ╚██████╗███████╗██████╔╝██████╔╝╚██████╔╝   ██║   
-      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.0.0""")
+      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.0.1""")
     print("[/] CLDBOT Starting...")
 
     api_client = CloudflareAPIClient(API_TOKEN, ZONE_ID)
