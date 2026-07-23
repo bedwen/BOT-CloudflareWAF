@@ -93,32 +93,31 @@ def bulk_block_main(ip_mgr):
     try:
         #open file with write mode
         with open(file_path, 'r') as file:
-            for line in file:
-                ip = line.strip()
-                if not ip:
-                    continue
-
-                if not is_valid_ip(ip):
-                    print(f"[!] Invalid IP format skipped: {ip}")
-                    invalid_count += 1
-                    continue
-
-                block_check = ip_mgr.block_ip(ip, description)
-                if block_check:
-                    success_count += 1
-                else:
-                    fail_count += 1
-
+            lines = [line.strip() for line in file.readlines() if line.strip()]
     except Exception as e:
         print(f"[X] Error reading file: {e}")
         return
 
-    print("--- BULK BLOCK SUMMARY ---")
-    print(f"Total processed : {success_count + fail_count + invalid_count}\n"
-          f"Successful      : {success_count}\n"
-          f"Failed          : {fail_count}\n"
-          f"Invalid format  : {invalid_count}\n"
-          f"="*50)
+    if not lines:
+        print("[-] The file is empty.")
+        return
+
+    for line in lines:
+        ip = line.strip()
+
+        if not ip:
+            continue
+
+        if not is_valid_ip(ip):
+            print(f"[!] Invalid IP format skipped: {ip}")
+            invalid_count += 1
+            continue
+
+        block_check = ip_mgr.block_ip(ip, description)
+        if block_check:
+            success_count += 1
+        else:
+            fail_count += 1
 
 def delete_rule_main(ip_mgr, waf_mgr):
     print("--- DELETE RULE ---")

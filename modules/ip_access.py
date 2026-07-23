@@ -44,6 +44,10 @@ class IPAccessManager:
                 return True
 
             else:
+                if "10009" in response.text or "81057" in response.text or "duplicate" in response.text.lower():
+                    print(f"[-] {ip_address} is already blocked. Skipping.")
+                    return True
+
                 print(f"[X] Rule Addition Error: {response.status_code} - {response.text}")
                 return False
 
