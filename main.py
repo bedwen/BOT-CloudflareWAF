@@ -1,7 +1,13 @@
 import os.path
 from unittest.result import failfast
 
-from config import API_TOKEN, ZONE_ID
+from requests.packages import target
+
+from modules.threat_intel import ThreatIntelManager
+from utils.ip_validation import is_valid_ip
+from utils.logger import log
+
+from config import API_TOKEN, ZONE_ID, ABUSE_API_KEY
 from core.api_client import CloudflareAPIClient
 from modules.ip_access import IPAccessManager
 from modules.waf_rules import WafRulesManager
@@ -178,6 +184,50 @@ def delete_rule_main(ip_mgr, waf_mgr):
     except ValueError:
         print("[X] Error: Please enter a valid number.")
 
+def unblock_ip_main(ip_mgr):
+    print("--- UNBLOCK BY IP ---")
+
+    while True:
+        target_ip = input("Enter the IP address you want to unblock (or 'q' to cancel): ").strip()
+
+        if target_ip.lower() == 'q':
+            print("[-] The operation was canceled.")
+            return
+
+        if not target_ip:
+            print("[!] Error: The IP address cannot be left blank.")
+            continue
+
+        if not is_valid_ip(target_ip):
+            print(f"[!] Error: '{target_ip}' is not a valid IP address. Please try again.")
+            continue
+
+        break
+
+    ip_mgr.unblock_ip(target_ip)
+
+
+def check_ip_reputation_main(threat_mgr):
+    log.info("--- THREAT INTELLIGENCE (AbuseIPDB) ---")
+    while True:
+        target_ip = input("[>] Enter the IP address to check (or 'q' to cancel): ").strip()
+
+        if target_ip.lower() == 'q':
+            log.info("[X] The operation was canceled.")
+            return
+
+        if not target_ip:
+            log.warning("[X] Error: The IP address cannot be left blank.")
+            continue
+
+        if not is_valid_ip(target_ip):
+            log.error(f"[X] Error: '{target_ip}' is not a valid IP address. Pleaase try again.")
+            continue
+
+        break
+
+    threat_mgr.check_ip_reputation(target_ip)
+
 def main():
     print("""
      ██████╗ ██╗     ██████╗ ██████╗  ██████╗ ████████╗
@@ -185,22 +235,24 @@ def main():
      ██║     ██║     ██║  ██║██████╔╝██║   ██║   ██║   
      ██║     ██║     ██║  ██║██╔══██╗██║   ██║   ██║   
      ╚██████╗███████╗██████╔╝██████╔╝╚██████╔╝   ██║   
-      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.0.2""")
+      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.1.0""")
     print("[/] CLDBOT Starting...")
 
     api_client = CloudflareAPIClient(API_TOKEN, ZONE_ID)
 
     ip_mgr = IPAccessManager(api_client)
     waf_mgr = WafRulesManager(api_client)
+    threat_mgr = ThreatIntelManager(ABUSE_API_KEY)
 
     while True:
         print("\n"+"="*50)
         print("CLDBOT MENU")
         print("="*50+"\n")
         print("[1] List Rules\n"
-              "[2] Block IP Address\n"
-              "[3] Delete Rule\n"
+              "[2] Delete Rule\n"
+              "[3] Block IP Address\n"
               "[4] Bulk Block IPs (from file)\n"
+              "[5] Unblock IP (Fast)\n"
               "[0] Exit")
         print("\n"+"="*50)
 
@@ -209,11 +261,15 @@ def main():
         if choose == "1":
             waf_rule_list(ip_mgr,waf_mgr)
         elif choose == "2":
-            block_ip_main(ip_mgr)
-        elif choose == "3":
             delete_rule_main(ip_mgr,waf_mgr)
+        elif choose == "3":
+            block_ip_main(ip_mgr)
         elif choose == "4":
             bulk_block_main(ip_mgr)
+        elif choose == "5":
+            unblock_ip_main(ip_mgr)
+        elif choose == "6":
+            check_ip_reputation_main(threat_mgr)
         elif choose == "0":
             print("\n[/] Exiting...")
             break
