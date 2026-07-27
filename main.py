@@ -25,11 +25,11 @@ def waf_rule_list(ip_mgr, waf_mgr):
     elif rule_type in ['1','2']:
         rule_list = waf_mgr.get_rules(rule_type)
     else:
-        print("[X] Invalid selection.")
+        log.error("Invalid selection.")
         return
 
     if not rule_list:
-        print("The rule could not be found or listed.")
+        log.info("The rule could not be found or listed.")
         return
 
     for index, rule in enumerate(rule_list, start=1):
@@ -38,31 +38,31 @@ def waf_rule_list(ip_mgr, waf_mgr):
             target = rule.get("configuration", {}).get("value", "Unknown")
             mode = rule.get("mode", "Unknown")
             notes = rule.get("notes", "No Description")
-            print(f"[{index}] IP: {target:<15} | Mode: {mode:<8} | Note: {notes}")
+            log.info(f"[{index}] IP: {target:<15} | Mode: {mode:<8} | Note: {notes}")
         else:
             #for custom and rate-limit format (they have extra description and action layer)
             description = rule.get("description","No Description")
             action = rule.get("action","Unknown")
-            print(f"[{index}] Rule: {description:<25} | Action: {action}")
+            log.info(f"[{index}] Rule: {description:<25} | Action: {action}")
     print("="*50)
 
 def block_ip_main(ip_mgr):
     #take ip address from user and block.
-    print("--- IP BLOCK ---")
+    log.info("--- IP BLOCK ---")
 
     while True:
-        target_ip = input("Enter the IP address to block: ")
+        target_ip = input("[>]Enter the IP address to block: ")
         if target_ip.lower() == 'q':
-            print("[-] The operation was canceled.")
+            log.info("The operation was canceled.")
             return
 
         if not target_ip:
-            print("[!] Error: The IP address cannot be left blank.")
+            log.warning("Error: The IP address cannot be left blank.")
             continue
 
         #ip validation
         if not is_valid_ip(target_ip):
-            print(f"[!] Error: '{target_ip}' is not a valid IP address. Please try again.")
+            log.error(f"Error: '{target_ip}' is not a valid IP address. Please try again.")
             continue
 
         break
@@ -73,24 +73,24 @@ def block_ip_main(ip_mgr):
 
 
 def bulk_block_main(ip_mgr):
-    print("--- BULK IP BLOCK ---")
+    log.info("--- BULK IP BLOCK ---")
 
-    file_path = input("Enter the file name containing IP addresses (e.g., ips.txt) or 'q' to cancel: ").strip()
+    file_path = input("[>] Enter the file name containing IP addresses (e.g., ips.txt) or 'q' to cancel: ").strip()
 
     if file_path.lower() == 'q':
-        print("[-] The operation was canceled.")
+        log.info("The operation was canceled.")
         return
 
     #check file
     if not os.path.isfile(file_path):
-        print(f"[!] Error: The file '{file_path}' was not found in the directory.")
+        log.error(f"Error: The file '{file_path}' was not found in the directory.")
         return
 
-    description = input("Enter a common description for these IPs (Press Enter for defaul): ").strip()
+    description = input(log.info("[>] Enter a common description for these IPs (Press Enter for defaul): ")).strip()
     if not description:
         description = "Bulk blocked via CLDBOT"
 
-    print(f"\n[/] Reading '{file_path}' and processing IPs...")
+    log.info(f"\nReading '{file_path}' and processing IPs...")
 
     success_count = 0
     fail_count = 0
@@ -101,11 +101,11 @@ def bulk_block_main(ip_mgr):
         with open(file_path, 'r') as file:
             lines = [line.strip() for line in file.readlines() if line.strip()]
     except Exception as e:
-        print(f"[X] Error reading file: {e}")
+        log.error(f"Error reading file: {e}")
         return
 
     if not lines:
-        print("[-] The file is empty.")
+        log.info("The file is empty.")
         return
 
     for line in lines:
@@ -115,7 +115,7 @@ def bulk_block_main(ip_mgr):
             continue
 
         if not is_valid_ip(ip):
-            print(f"[!] Invalid IP format skipped: {ip}")
+            log.warning(f"Invalid IP format skipped: {ip}")
             invalid_count += 1
             continue
 
@@ -126,7 +126,7 @@ def bulk_block_main(ip_mgr):
             fail_count += 1
 
 def delete_rule_main(ip_mgr, waf_mgr):
-    print("--- DELETE RULE ---")
+    log.info("--- DELETE RULE ---")
     print("[1] Custom Rules\n[2] Rate-Limiitng Rules\n[3] IP Block Rules")
     rule_type = input("[>] Select the rule you want to delete it: ")
 
@@ -136,11 +136,11 @@ def delete_rule_main(ip_mgr, waf_mgr):
     elif rule_type in ['1','2']:
         rule_list = waf_mgr.get_rules(rule_type)
     else:
-        print("[X] Invalid selection.")
+        log.error("Invalid selection.")
         return
 
     if not rule_list:
-        print("[-] No rule was found to delete. Returning to the main menu.")
+        log.info("No rule was found to delete. Returning to the main menu.")
         return
 
     print("\n"+"="*50)
@@ -156,10 +156,10 @@ def delete_rule_main(ip_mgr, waf_mgr):
             print(f"[{index}] Rule Name: {description}")
     print("="*50)
 
-    choose_rule = input(f"\nEnter the sequence number of the rule you want to delete (1-{len(rule_list)}) or 'q' for cancel operation: ")
+    choose_rule = input(f"\n[>] Enter the sequence number of the rule you want to delete (1-{len(rule_list)}) or 'q' for cancel operation: ")
 
     if choose_rule.lower() == 'q':
-        print("[-] The operation was canceled.")
+        log.info("The operation was canceled.")
         return
 
     try:
@@ -169,37 +169,37 @@ def delete_rule_main(ip_mgr, waf_mgr):
             rule_id = selected_rule.get("id")
             target_rule = selected_rule.get("configuration", {}).get("value","Unknown Target")
 
-            approval = input(f"[!] WARN: Rule {choose_rule} containing the target '{target_rule}' will be deleted. Do you confirm? (Y/N): ")
+            approval = input(log.warning("WARN: Rule {choose_rule} containing the target '{target_rule}' will be deleted. Do you confirm? (Y/N): "))
             if approval.lower() == 'y':
-                print(f"\n[/] Rule is deleting...")
+                log.info(f"\nRule is deleting...")
 
                 if rule_type == '3':
                     ip_mgr.delete_rule(rule_id)
                 else:
                     waf_mgr.delete_rule(rule_id, rule_type)
             else:
-                print("[-] The operation was canceled.")
+                log.info("The operation was canceled.")
         else:
-            print("[X] Error: The number you entered is not on the list.")
+            log.error("Error: The number you entered is not on the list.")
     except ValueError:
-        print("[X] Error: Please enter a valid number.")
+        log.error("Error: Please enter a valid number.")
 
 def unblock_ip_main(ip_mgr):
-    print("--- UNBLOCK BY IP ---")
+    log.info("--- UNBLOCK BY IP ---")
 
     while True:
-        target_ip = input("Enter the IP address you want to unblock (or 'q' to cancel): ").strip()
+        target_ip = input("[>] Enter the IP address you want to unblock (or 'q' to cancel): ").strip()
 
         if target_ip.lower() == 'q':
-            print("[-] The operation was canceled.")
+            log.info("The operation was canceled.")
             return
 
         if not target_ip:
-            print("[!] Error: The IP address cannot be left blank.")
+            log.error("Error: The IP address cannot be left blank.")
             continue
 
         if not is_valid_ip(target_ip):
-            print(f"[!] Error: '{target_ip}' is not a valid IP address. Please try again.")
+            log.error(f"Error: '{target_ip}' is not a valid IP address. Please try again.")
             continue
 
         break
@@ -213,15 +213,15 @@ def check_ip_reputation_main(threat_mgr):
         target_ip = input("[>] Enter the IP address to check (or 'q' to cancel): ").strip()
 
         if target_ip.lower() == 'q':
-            log.info("[X] The operation was canceled.")
+            log.info("The operation was canceled.")
             return
 
         if not target_ip:
-            log.warning("[X] Error: The IP address cannot be left blank.")
+            log.warning("Error: The IP address cannot be left blank.")
             continue
 
         if not is_valid_ip(target_ip):
-            log.error(f"[X] Error: '{target_ip}' is not a valid IP address. Pleaase try again.")
+            log.error(f"Error: '{target_ip}' is not a valid IP address. Pleaase try again.")
             continue
 
         break
@@ -253,6 +253,7 @@ def main():
               "[3] Block IP Address\n"
               "[4] Bulk Block IPs (from file)\n"
               "[5] Unblock IP (Fast)\n"
+              "[6] IP Threat Intelligence\n"
               "[0] Exit")
         print("\n"+"="*50)
 

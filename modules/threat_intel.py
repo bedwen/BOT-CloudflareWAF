@@ -8,7 +8,7 @@ class ThreatIntelManager:
 
     def check_ip_reputation(self, ip_address):
         if not self.api_key:
-            log.error("[!] AbuseIPDB API Key is missing! Please add it to your config/env file.")
+            log.error("AbuseIPDB API Key is missing! Please add it to your config/env file.")
             return None
 
         log.info(f"Querying AbuseIPDB for IP: {ip_address}...")
@@ -45,18 +45,18 @@ class ThreatIntelManager:
                 return data
 
             elif response.status_code == 401:
-                log.error("[X] AbuseIPDB API Key is invalid or expired.")
+                log.error("AbuseIPDB API Key is invalid or expired.")
                 return None
             elif response.status_code == 429:
-                log.error("[X] AbuseIPDB Rate Limit Exceeded. Try again later.")
+                log.error("AbuseIPDB Rate Limit Exceeded. Try again later.")
                 return None
             else:
                 log.error(f"AbuseIPDB API Error: {response.status_code} - {response.text}")
                 return None
 
         except requests.exceptions.Timeout:
-            log.error("[X] AbuseIPDB query timed out.")
+            log.error("AbuseIPDB query timed out.")
             return None
         except requests.exceptions.RequestException as e:
-            log.error(f"[X] AbuseIPDB Connection Error: {e}")
+            log.error(f"AbuseIPDB Connection Error: {e}")
             return None

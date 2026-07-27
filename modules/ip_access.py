@@ -2,8 +2,10 @@ from idlelib.rpc import response_queue
 from ipaddress import ip_address
 
 import requests
+from utils.logger import log
 
 class IPAccessManager:
+
     #rule type 3 - handless only ip access rule
 
     def __init__(self, api_client):
@@ -20,10 +22,10 @@ class IPAccessManager:
                 result = data.get("result", [])
                 return result if isinstance(result, list) else []
             else:
-                print(f"API Error: {response.status_code} - {response.text}")
+                log.error(f"API Error: {response.status_code} - {response.text}")
                 return []
         except requests.exceptions.RequestException as e:
-            print(f"Connection Error: {e}")
+            log.error(f"Connection Error: {e}")
             return []
 
     def block_ip(self, ip_address, description="Target IP blocked by CLDBOT"):
@@ -41,19 +43,19 @@ class IPAccessManager:
             #this request is POST because we are sending data.
             response = requests.post(self.endpoint, headers=self.api.headers, json=payload)
             if response.status_code == 200:
-                print(f"[✔] {ip_address} The IP address has been successfully blocked.")
+                log.success(f"{ip_address} The IP address has been successfully blocked.")
                 return True
 
             else:
                 if "10009" in response.text or "81057" in response.text or "duplicate" in response.text.lower():
-                    print(f"[-] {ip_address} is already blocked. Skipping.")
+                    log.info(f"{ip_address} is already blocked. Skipping.")
                     return True
 
-                print(f"[X] Rule Addition Error: {response.status_code} - {response.text}")
+                log.error(f"Rule Addition Error: {response.status_code} - {response.text}")
                 return False
 
         except requests.exceptions.RequestException as e:
-            print(f"[X] Connection Error: {e}")
+            log.error(f"[X] Connection Error: {e}")
             return False
 
     def delete_rule(self, rule_id):
@@ -61,17 +63,17 @@ class IPAccessManager:
         try:
             response = requests.delete(url, headers=self.api.headers)
             if response.status_code == 200:
-                print(f"[✔] Success! Rule (ID: ({rule_id}) deleted")
+                log.success(f"Success! Rule (ID: ({rule_id}) deleted")
                 return True
             else:
-                print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
+                log.error(f"Rule Deleting Error: {response.status_code} - {response.text}")
                 return False
         except requests.exceptions.RequestException as e:
-            print(f"[X] Connection Error: {e}")
+            log.error(f"Connection Error: {e}")
             return False
 
     def unblock_ip(self, ip_address):
-        print(f"[/] Searching for IP {ip_address} in your Cloudflare rules...")
+        log.info(f"Searching for IP {ip_address} in your Cloudflare rules...")
 
         params = {
             "configuration.value": ip_address
@@ -85,14 +87,14 @@ class IPAccessManager:
                 result = data.get("result", [])
 
                 if not result:
-                    print(f"[-] The IP {ip_address} is not currently blocked in IP Access Rules.")
-                    print(f"[i] Note: If it is blocked via WAF Custom Rules, this menu cannot see it.")
+                    log.info(f"The IP {ip_address} is not currently blocked in IP Access Rules.")
+                    log.info(f"Note: If it is blocked via WAF Custom Rules, this menu cannot see it.")
                     return False
 
                 success = False
                 for rule in result:
                     rule_id = rule.get("id")
-                    print(f"[/] Match found! Deleting rule (ID: {rule_id}) for {ip_address}...")
+                    log.success(f"Match found! Deleting rule (ID: {rule_id}) for {ip_address}...")
 
 
                     if self.delete_rule(rule_id):
@@ -101,9 +103,9 @@ class IPAccessManager:
                 return success
 
             else:
-                print(f"[X] API Error: {response.status_code} - {response.text}")
+                log.error(f"API Error: {response.status_code} - {response.text}")
                 return False
 
         except requests.exceptions.RequestException as e:
-            print(f"[X] Connection Error: {e}")
+            log.error(f"Connection Error: {e}")
             return False

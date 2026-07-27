@@ -1,4 +1,6 @@
 import requests
+from utils.logger import log
+
 
 class WafRulesManager:
     #handles only custom rules and rate-limiting rules
@@ -36,37 +38,37 @@ class WafRulesManager:
                     return result.get("rules", [])
                 return []
             else:
-                print(f"API Error: {response.status_code} - {response.text}")
+                log.error(f"API Error: {response.status_code} - {response.text}")
                 return []
         except requests.exceptions.RequestException as e:
-            print(f"Connection Error: {e}")
+            log.error(f"Connection Error: {e}")
             return []
 
     def delete_rule(self, rule_id, rule_type):
         if rule_type == '1':
             if not self.custom_ruleset_id:
-                print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+                log.error("Error: Ruleset ID not found. Please list the rules before deleting them.")
                 return False
             endpoint = f"{self.api.base_url}/rulesets/{self.custom_ruleset_id}/rules/{rule_id}"
 
         elif rule_type == '2':
             if not self.ratelimit_ruleset_id:
-                print("[X] Error: Ruleset ID not found. Please list the rules before deleting them.")
+                log.error("Error: Ruleset ID not found. Please list the rules before deleting them.")
                 return False
             endpoint = f"{self.api.base_url}/rulesets/{self.ratelimit_ruleset_id}/rules/{rule_id}"
         else:
-            print("[X] Invalid rule type!")
+            log.error("Invalid rule type!")
             return False
 
         try:
             response = requests.delete(endpoint, headers=self.api.headers)
             if response.status_code == 200:
-                print(f"[✔] Success! Rule (ID: ({rule_id}) deleted")
+                log.success(f"Success! Rule (ID: ({rule_id}) deleted")
                 return True
             else:
-                print(f"[X] Rule Deleting Error: {response.status_code} - {response.text}")
+                log.error(f"  Rule Deleting Error: {response.status_code} - {response.text}")
                 return False
         except requests.exceptions.RequestException as e:
-            print(f"[X] Connection Error: {e}")
+            log.error(f"Connection Error: {e}")
             return False
 
