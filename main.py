@@ -12,6 +12,7 @@ from core.api_client import CloudflareAPIClient
 from modules.ip_access import IPAccessManager
 from modules.waf_rules import WafRulesManager
 from utils.ip_validation import is_valid_ip
+from modules.zone_settings import ZoneSettingsManager
 
 def waf_rule_list(ip_mgr, waf_mgr):
     #WAF Rules
@@ -228,6 +229,39 @@ def check_ip_reputation_main(threat_mgr):
 
     threat_mgr.check_ip_reputation(target_ip)
 
+def security_level_menu(zone_mgr):
+    while True:
+        log.info("--- SECURITY LEVEL & UNDER ATTACK MODE ---")
+        print("[1] Check Current Security Level\n"
+              "[2] Set to LOW\n"
+              "[3] Set to MEDIUM - Disable Under Attack Mode\n"
+              "[4] Set to HIGH\n"
+              "[5] Enable Under Attack Mode\n"
+              "[9] Exit")
+
+        choice = input("[>] Please select an operation: ").strip()
+
+        if choice == '1':
+            zone_mgr.get_security_level()
+        elif choice == '2':
+            zone_mgr.set_security_level("low")
+        elif choice == '3':
+            zone_mgr.set_security_level("medium")
+        elif choice == '4':
+            zone_mgr.set_security_level("high")
+        elif choice == '5':
+            log.warning("WARN: This will present a JS challange to ALL visitors.")
+            confirm = input("Are you sure? (y/n): ").strip().lower()
+            if confirm == 'y':
+                zone_mgr.set_security_level("under_attack")
+            else:
+                log.info("Operation canceled.")
+        elif choice == '9':
+            break
+        else:
+            log.error("Invalid selection. Please select one of the options provided.")
+
+
 def main():
     print("""
      ██████╗ ██╗     ██████╗ ██████╗  ██████╗ ████████╗
@@ -235,7 +269,7 @@ def main():
      ██║     ██║     ██║  ██║██████╔╝██║   ██║   ██║   
      ██║     ██║     ██║  ██║██╔══██╗██║   ██║   ██║   
      ╚██████╗███████╗██████╔╝██████╔╝╚██████╔╝   ██║   
-      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.1.0""")
+      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.2.0""")
     print("[/] CLDBOT Starting...")
 
     api_client = CloudflareAPIClient(API_TOKEN, ZONE_ID)
@@ -243,23 +277,31 @@ def main():
     ip_mgr = IPAccessManager(api_client)
     waf_mgr = WafRulesManager(api_client)
     threat_mgr = ThreatIntelManager(ABUSE_API_KEY)
+    zone_mgr = ZoneSettingsManager(api_client)
 
     while True:
         print("\n"+"="*50)
         print("CLDBOT MENU")
         print("="*50+"\n")
-        print("[1] List Rules\n"
+
+        zone_mgr.get_security_level()
+        print("")
+
+        print("[0] Under Attack Mode\n"
+              "[1] List Rules\n"
               "[2] Delete Rule\n"
               "[3] Block IP Address\n"
               "[4] Bulk Block IPs (from file)\n"
               "[5] Unblock IP (Fast)\n"
               "[6] IP Threat Intelligence\n"
-              "[0] Exit")
+              "[9] Exit")
         print("\n"+"="*50)
 
         choose = input("[>] Please select an operation: ")
 
-        if choose == "1":
+        if choose == "0":
+            security_level_menu(zone_mgr)
+        elif choose == "1":
             waf_rule_list(ip_mgr,waf_mgr)
         elif choose == "2":
             delete_rule_main(ip_mgr,waf_mgr)
@@ -271,7 +313,7 @@ def main():
             unblock_ip_main(ip_mgr)
         elif choose == "6":
             check_ip_reputation_main(threat_mgr)
-        elif choose == "0":
+        elif choose == "9":
             print("\n[/] Exiting...")
             break
         else:

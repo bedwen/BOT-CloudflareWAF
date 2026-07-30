@@ -1,6 +1,12 @@
 .env
+venv/
+.venv/
+env/
+pycache/
+*.pyc
 .idea/
-__pycache__/
+.vscode/
 .DS_Store
 *.log
 cldbot.log
+
