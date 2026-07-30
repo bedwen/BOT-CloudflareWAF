@@ -76,6 +76,7 @@ class IPAccessManager:
         log.info(f"Searching for IP {ip_address} in your Cloudflare rules...")
 
         params = {
+            "configuration.target": "ip",
             "configuration.value": ip_address
         }
 
@@ -94,7 +95,7 @@ class IPAccessManager:
                 success = False
                 for rule in result:
                     rule_id = rule.get("id")
-                    log.success(f"Match found! Deleting rule (ID: {rule_id}) for {ip_address}...")
+                    log.success(f"Match found! Deleting rule (ID: {rule_id}) for {ip_address}")
 
 
                     if self.delete_rule(rule_id):

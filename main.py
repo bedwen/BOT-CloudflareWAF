@@ -72,6 +72,7 @@ def block_ip_main(ip_mgr):
     if not description.strip():
         description = "The target IP has been blocked via CLDBOT."
 
+    ip_mgr.block_ip(target_ip, description)
 
 def bulk_block_main(ip_mgr):
     log.info("--- BULK IP BLOCK ---")
@@ -87,7 +88,7 @@ def bulk_block_main(ip_mgr):
         log.error(f"Error: The file '{file_path}' was not found in the directory.")
         return
 
-    description = input(log.info("[>] Enter a common description for these IPs (Press Enter for defaul): ")).strip()
+    description = input("[>] Enter a common description for these IPs (Press Enter for defaul): ").strip()
     if not description:
         description = "Bulk blocked via CLDBOT"
 
