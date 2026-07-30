@@ -127,6 +127,58 @@ def bulk_block_main(ip_mgr):
         else:
             fail_count += 1
 
+def bulk_unblock_main(ip_mgr):
+    log.info("--- BULK IP UNBLOCK ---")
+
+    file_path = input("[>] Enter the file name containing IP addresses (e.g., ips.txt) or 'q' to cancel: ")
+
+    if file_path.lower() == 'q':
+        log.info("The operation was canceled.")
+        return
+
+    if not os.path.isfile(file_path):
+        log.error(f"Error: The file '{file_path}' was not found in the directory.")
+        return
+
+    log.info(f"\nReading '{file_path}' and processing IPs for unblocking...")
+
+    success_count = 0
+    fail_count = 0
+    invalid_count = 0
+
+    try:
+        with open(file_path, 'r') as file:
+            lines = [line.strip() for line in file.readlines() if line.strip()]
+    except Exception as e:
+        log.error(f"Error reading file: {e}")
+        return
+
+    if not lines:
+        log.info("The file is empty.")
+        return
+
+    for line in lines:
+        ip = line.strip()
+
+        if not ip:
+            continue
+
+        if not is_valid_ip(ip):
+            log.warning(f"Invalid IP format skipped: {ip}")
+            invalid_count += 1
+            continue
+
+        unblock_check = ip_mgr.unblock_ip(ip)
+        if unblock_check:
+            success_count += 1
+        else:
+            fail_count += 1
+
+    log.info(f"Bulk Unblock Process Completed! Succes: {success_count}, Failed: {fail_count}, Invalid: {invalid_count}")
+
+
+
+
 def delete_rule_main(ip_mgr, waf_mgr):
     log.info("--- DELETE RULE ---")
     print("[1] Custom Rules\n[2] Rate-Limiitng Rules\n[3] IP Block Rules")
@@ -270,7 +322,7 @@ def main():
      ██║     ██║     ██║  ██║██████╔╝██║   ██║   ██║   
      ██║     ██║     ██║  ██║██╔══██╗██║   ██║   ██║   
      ╚██████╗███████╗██████╔╝██████╔╝╚██████╔╝   ██║   
-      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.2.0""")
+      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.3.0""")
     print("[/] CLDBOT Starting...")
 
     api_client = CloudflareAPIClient(API_TOKEN, ZONE_ID)
@@ -293,8 +345,9 @@ def main():
               "[2] Delete Rule\n"
               "[3] Block IP Address\n"
               "[4] Bulk Block IPs (from file)\n"
-              "[5] Unblock IP (Fast)\n"
-              "[6] IP Threat Intelligence\n"
+              "[5] Bulk Unblock IPs (from file)\n"
+              "[6] Unblock IP (Fast)\n"
+              "[7] IP Threat Intelligence\n"
               "[9] Exit")
         print("\n"+"="*50)
 
@@ -311,8 +364,10 @@ def main():
         elif choose == "4":
             bulk_block_main(ip_mgr)
         elif choose == "5":
-            unblock_ip_main(ip_mgr)
+            bulk_unblock_main(ip_mgr)
         elif choose == "6":
+            unblock_ip_main(ip_mgr)
+        elif choose == "7":
             check_ip_reputation_main(threat_mgr)
         elif choose == "9":
             print("\n[/] Exiting...")
