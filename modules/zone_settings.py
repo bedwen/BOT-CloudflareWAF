@@ -1,4 +1,5 @@
 import requests
+import datetime
 from utils.logger import log
 
 class ZoneSettingsManager:
@@ -74,3 +75,48 @@ class ZoneSettingsManager:
         except requests.exceptions.RequestException as e:
             log.error(f"Connection Error: {e}")
             return False
+
+    def get_zone_analytics(self):
+
+        url = "https://api.cloudflare.com/client/v4/graphql"
+
+        zone_id = self.api.base_url.rstrip('/').split('/')[-1]
+
+        now = datetime.datetime.utcnow()
+        yesterday = now - datetime.timedelta(days=1)
+        since = yesterday.strftime("%Y-%m-%dT%H:%M:%SZ")
+        until = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        query = """
+        query {
+            viewer {
+                zones(filter: {zoneTag: "%s"}) {
+                    httpRequests1hGroups(limit: 100, filter: {datetime_geq: "%s", datetime_lt: "%s"}) {
+                        sum {
+                            requests
+                        }
+                    }
+                }
+            }
+        }
+        """ % (zone_id, since, until)
+
+        try:
+            response = requests.post(url, headers=self.api.headers, json={"query": query}, timeout=5)
+
+            if response.status_code == 200:
+                data = response.json()
+                try:
+                    groups = data["data"]["viewer"]["zones"][0]["httpRequests1hGroups"]
+
+                    total_requests = sum(group["sum"]["requests"] for group in groups)
+
+                    return f"{total_requests:,}".replace(",", ".")
+                except (KeyError, IndexError, TypeError):
+                    return "No Data"
+            else:
+                log.warning(f"GraphQL Analytics Error: {response.status_code}")
+                return "Error"
+
+        except requests.exceptions.RequestException:
+            return "Timeout"

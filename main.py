@@ -5,7 +5,7 @@ from requests.packages import target
 
 from modules.threat_intel import ThreatIntelManager
 from utils.ip_validation import is_valid_ip
-from utils.logger import log
+from utils.logger import log, Colors
 
 from config import API_TOKEN, ZONE_ID, ABUSE_API_KEY
 from core.api_client import CloudflareAPIClient
@@ -13,6 +13,8 @@ from modules.ip_access import IPAccessManager
 from modules.waf_rules import WafRulesManager
 from utils.ip_validation import is_valid_ip
 from modules.zone_settings import ZoneSettingsManager
+from modules.firewall_logs import FirewallLogsManager
+
 
 def waf_rule_list(ip_mgr, waf_mgr):
     #WAF Rules
@@ -314,6 +316,37 @@ def security_level_menu(zone_mgr):
         else:
             log.error("Invalid selection. Please select one of the options provided.")
 
+def firewall_logs_main(fw_logs_mgr):
+    log.info("--- LIVE LOGS ---")
+    events = fw_logs_mgr.get_recent_events(limit=15)
+
+    if not events:
+        return
+
+    print(f"\n{'-'*90}")
+    print(f"{'TIME (UTC)':<20} | {'IP ADDRESS':>16} | {'COUNTRY':<15} | {'ACTION':<15} | {'SOURCE'}")
+    print(f"{'-'*90}")
+
+    for ev in events:
+        dt_raw = ev.get('datetime', '')
+        dt_clean = dt_raw.replace('T', ' ').replace('Z','')
+
+        ip = ev.get('clientIP', 'Unknown')
+        country = ev.get('clientCountryName','Unknown')
+        action = ev.get('action', 'Unknown').upper()
+        source = ev.get('soruce','Unknown')
+
+        if action == 'BLOCK' or action == 'DROP':
+            action_str = f"{Colors.RED}{action:<15}{Colors.RESET}"
+        elif 'CHALLANGE' in action:
+            action_str = f"{Colors.YELLOW}{action:<15}{Colors.RESET}"
+        else:
+            action_str = f"{Colors.CYAN}{action:<15}{Colors.RESET}"
+
+            print(f"{dt_clean:<20} | {ip:<16} | {country:<15} | {action_str} | {source}")
+
+        print(f"{'-'*90}\n")
+
 
 def main():
     print("""
@@ -322,7 +355,7 @@ def main():
      ██║     ██║     ██║  ██║██████╔╝██║   ██║   ██║   
      ██║     ██║     ██║  ██║██╔══██╗██║   ██║   ██║   
      ╚██████╗███████╗██████╔╝██████╔╝╚██████╔╝   ██║   
-      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.3.0""")
+      ╚═════╝╚══════╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝ v1.4.0""")
     print("[/] CLDBOT Starting...")
 
     api_client = CloudflareAPIClient(API_TOKEN, ZONE_ID)
@@ -331,12 +364,16 @@ def main():
     waf_mgr = WafRulesManager(api_client)
     threat_mgr = ThreatIntelManager(ABUSE_API_KEY)
     zone_mgr = ZoneSettingsManager(api_client)
+    fw_logs_mgr = FirewallLogsManager(api_client)
+
 
     while True:
         print("\n"+"="*50)
         print("CLDBOT MENU")
         print("="*50+"\n")
 
+
+        log.info(f"24H Requests: {zone_mgr.get_zone_analytics()}")
         zone_mgr.get_security_level()
         print("")
 
@@ -348,6 +385,7 @@ def main():
               "[5] Bulk Unblock IPs (from file)\n"
               "[6] Unblock IP (Fast)\n"
               "[7] IP Threat Intelligence\n"
+              "[8] Live Logs\n"
               "[9] Exit")
         print("\n"+"="*50)
 
@@ -369,6 +407,8 @@ def main():
             unblock_ip_main(ip_mgr)
         elif choose == "7":
             check_ip_reputation_main(threat_mgr)
+        elif choose == "8":
+            firewall_logs_main(fw_logs_mgr)
         elif choose == "9":
             print("\n[/] Exiting...")
             break

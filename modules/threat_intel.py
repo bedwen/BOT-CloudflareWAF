@@ -60,3 +60,4 @@ class ThreatIntelManager:
         except requests.exceptions.RequestException as e:
             log.error(f"AbuseIPDB Connection Error: {e}")
             return None
+

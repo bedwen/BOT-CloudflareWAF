@@ -72,3 +72,4 @@ class WafRulesManager:
             log.error(f"Connection Error: {e}")
             return False
 
+
