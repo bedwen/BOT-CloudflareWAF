@@ -8,6 +8,7 @@ It was developed with the guidance of artificial intelligence.
 
 ---
 # **Functions**
+```
 - 0-Under Attack Mode
 - 1-List Rules
 - 2-Delete Rule
@@ -18,7 +19,7 @@ It was developed with the guidance of artificial intelligence.
 - 7-IP Threat Intelligence
 - 8-Live Logs
 - 9-Exit
-
+```
 ---
 **[0] Under Attack Mode**
 
