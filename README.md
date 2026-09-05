@@ -43,30 +43,35 @@ List the rules; first, three options appear in front of us:
 - Rate-Limiting Rules, lists the rules we use to limit the number of requests and bot requests.
 - IP Block Rules, lists the IP addresses we have blocked.
 
-
+---
 **[2] Delete Rule**
 
 The Delete Rule function allows us to select a rule from the Custom, Rate-Limiting, or IP Block rules and delete the 
 selected rule.
 
+---
 **[3] Block IP Address**
 
 With this function, we can directly block the IP address we enter.
 
+---
 **[4-5] Bulk Block - Unblock IPs (from file)**
 
 With these two functions, we can bulk-block IP addresses from a TXT file and, likewise, bulk-unblock them.
 
+---
 **[7] IP Threat Intelligence**
 
 
 This function shows us whether the IP address we enter is dangerous, which country the request originated from, and its 
 report status. It can be considered a basic form of IP intelligence.
 
+---
 **[8] Live Logs**
 
 This function retrieves the last 15 log entries recorded in the Firewall.
 
+---
 **[9] Exit**
 
 This option allows us to exit the bot.This option allows us to exit the bot.
